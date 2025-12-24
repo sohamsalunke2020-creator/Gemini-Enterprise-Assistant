@@ -1,0 +1,65 @@
+Category,Challenge Faced,Solution Implemented
+Environment Setup,The streamlit command was not recognized in the VS Code terminal despite successful installation.,"Used the python -m streamlit run app.py command to manually invoke the module, bypassing system path issues."
+Data Integration,"The MedQuAD dataset was initially in a complex XML format, making it difficult to process for a specialized Q&A bot.","Researched and utilized a pre-processed CSV version from Kaggle, enabling efficient data handling via the Pandas library."
+Feature Integration,The requirement to integrate 6 separate tasks into a single project created potential for a cluttered and confusing user interface.,"Implemented a Modular Sidebar Navigation in Streamlit, allowing users to switch seamlessly between different bot modes (e.g., Medical vs. Research)."
+Contextual Accuracy,AI models (Gemini-1.5-flash) sometimes provided general answers instead of specific responses based on the provided datasets.,Applied Prompt Engineering and RAG (Retrieval-Augmented Generation) techniques to force the model to prioritize the context provided in the knowledge base.
+Multi-Language Support,Ensuring the bot could automatically detect and respond in various languages without hard-coding every translation.,"Leveraged Gemini's native Natural Language Understanding (NLU) to automatically detect user intent and language, ensuring culturally appropriate responses."
+Lesson Learned: I realized that managing virtual environments and understanding the Python path is just as important as writing the actual AI logic.
+Challenge: Encountered a google.api_core.exceptions.NotFound error when calling the Gemini 1.5 Flash model.
+
+Solution: Switched the model identifier to gemini-1.5-flash-latest to ensure compatibility with the current API version and the generative-AI library installed in the environment
+Challenge: Encountered a google.api_core.exceptions.NotFound: 404 error when calling the specific model gemini-1.5-flash.
+
+Solution: Researched model versioning and lifecycle documentation. Updated the model identifier to gemini-1.5-flash-latest (or gemini-1.5-flash-002) to align with the supported models for the v1beta API version.
+Challenge: Encountered a 404 NotFound error because the Gemini 1.5 models were deprecated and shut down in late 2025.
+
+Solution: Researched the latest Google AI Studio release notes and updated the application to use the Gemini 3 Flash model (gemini-3-flash-preview), which provides enhanced reasoning and multimodal capabilities.
+Activities & Tasks: List all 6 tasks and confirm they are integrated into the "Mission Control" sidebar.
+
+Skills: Highlight your migration to the Google Gen AI SDK and the use of the Gemini 3 architecture.
+
+Challenges: Explicitly document the 404 Model Not Found error and how you fixed it by auditing models with genai.list_models().
+Challenge: Encountered ValueError: Missing key inputs when modularizing the application, as environment variables were not being shared across module scopes. Solution: Explicitly called load_dotenv() at the module level in medical.py and research.py to ensure the Google Gen AI Client could successfully retrieve the API key upon initialization.
+Activity: Integrated a dynamic knowledge injection system.
+
+Technical Skill: Implemented RAG-lite (Retrieval-Augmented Generation) by reading local file buffers and passing them as context to the LLM.
+
+Evidence: (Insert screenshot of you asking the bot a question about a file you uploaded).
+📅 Daily Report Entry: December 24, 2025
+Task(s) Worked On:
+
+Integration of Multi-modal capabilities (Task 2).
+
+Implementation of Sentiment Detection (Task 5) and Language Detection (Task 6).
+
+Verification of Medical Q&A (Task 3) and Research Expert (Task 4) logic.
+
+Work Done / Progress Made:
+
+Successfully implemented a unified API client using the google-genai SDK to handle the new Gemini 3 Flash model.
+
+Configured the "Mission Control" router to process image inputs and text prompts simultaneously.
+
+Tested the bot with a laptop product image; the system correctly identified hardware components while simultaneously detecting user frustration (sentiment) and responding in Hindi (language detection).
+
+Verified that the Medical Q&A module successfully pulls from the medquad.csv dataset and includes mandatory safety disclaimers.
+
+Confirmed the Research Expert module is correctly fetching and simplifying real-time data from the arXiv API.
+
+Challenges Faced & Solutions:
+
+Challenge: Encountered a 404 NotFound error due to the deprecation of Gemini 1.5 models.
+
+Solution: Conducted a model audit using client.models.list(), identified the current stable production model as gemini-3-flash-preview, and updated all project modules accordingly.
+
+Challenge: API Key loading issues in sub-modules.
+
+Solution: Implemented localized load_dotenv() calls within medical.py and research.py to ensure environment variables are accessible across the entire package.
+
+Learning Outcomes:
+
+Mastered the migration process between legacy and modern AI SDKs.
+
+Gained a deeper understanding of RAG (Retrieval-Augmented Generation) through the Task 1 Knowledge Update test.
+
+Learned how to structure a multi-task Streamlit application using session state and sidebar navigation.
