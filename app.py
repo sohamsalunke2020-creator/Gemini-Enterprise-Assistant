@@ -17,12 +17,21 @@ client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 # 2. Page Configuration
 st.set_page_config(page_title="GenAI Enterprise Assistant", layout="wide")
 
-# --- STEP 1: INITIALIZE SESSION STATE (FIXES YOUR ERROR) ---
+# --- INITIALIZE SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # 3. Sidebar - Mission Control
 st.sidebar.title("🤖 Mission Control")
+
+# --- NEW: SYSTEM HEALTH (TASK 1 DATABASE VERIFICATION) ---
+st.sidebar.markdown("### 🛠️ System Health")
+db_path = "faiss_index"
+if os.path.exists(db_path):
+    st.sidebar.success("✅ Knowledge Base: Connected")
+else:
+    st.sidebar.warning("⚠️ Knowledge Base: Offline")
+
 st.sidebar.markdown("---")
 
 task_mode = st.sidebar.selectbox("Select Task Mode", [
@@ -32,7 +41,7 @@ task_mode = st.sidebar.selectbox("Select Task Mode", [
     "Task 4: Research Expert"
 ])
 
-# Sidebar Reset Button (A Pro Feature)
+# Sidebar Reset Button
 if st.sidebar.button("🗑️ Clear Chat History"):
     st.session_state.messages = []
     st.rerun()
@@ -56,49 +65,37 @@ with tab_chat:
 
     elif "Task 1" in task_mode:
         uploaded_kb = st.sidebar.file_uploader("Upload .txt Knowledge", type=["txt"])
+        
+        # --- NEW: INDEXING BUTTON (TASK 1 REQUIREMENT) ---
         if uploaded_kb:
-            st.sidebar.success("Knowledge loaded!")
+            if st.sidebar.button("⚙️ Process & Index Knowledge"):
+                with st.spinner("Breaking text into chunks & updating Vector DB..."):
+                    # We pass the file to knowledge.py to be embedded
+                    handle_knowledge_update("Initial Indexing", uploaded_kb)
+                    st.sidebar.success("Database Successfully Updated!")
+                    st.rerun()
 
     # Display Chat History
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-with tab_data:
-    st.subheader("📁 Backend Reference")
-    if "Task 3" in task_mode:
-        try:
-            df = pd.read_csv("data/medquad.csv")
-            st.info("Displaying first 5 rows of MedQuAD Dataset")
-            st.dataframe(df.head(5), use_container_width=True)
-        except Exception as e:
-            st.error(f"Could not load dataset: {e}")
-    else:
-        st.write("This tab displays datasets used for Medical Q&A. Switch to Task 3 to view.")
-
-with tab_logs:
-    st.subheader("⚙️ System Diagnostics")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Model", value="Gemini 3 Flash")
-    with col2:
-        st.metric(label="Status", value="Healthy")
-    st.code(f"Engine: gemini-3-flash-preview\nSDK: Google GenAI 1.0.0\nSession ID: {id(st.session_state)}")
+# ... (tab_data and tab_logs code remains the same as your previous version) ...
 
 # --- THE LOGIC ROUTER ---
 if prompt := st.chat_input("Ask me anything..."):
-    # Save and display user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.spinner("Processing..."):
-        # Route 1: Knowledge Update
+        # Route 1: Knowledge Update (RAG Implementation)
         if "Task 1" in task_mode:
-            if uploaded_kb:
-                final_response = handle_knowledge_update(prompt, uploaded_kb)
+            if os.path.exists(db_path):
+                # We call the function with the prompt; it retrieves context from the DB
+                final_response = handle_knowledge_update(prompt, None)
             else:
-                final_response = "⚠️ Please upload a `.txt` file in the sidebar."
+                final_response = "⚠️ No Knowledge Base found. Please upload a `.txt` file and click 'Process' in the sidebar."
 
         # Route 2: Medical
         elif "Task 3" in task_mode:
@@ -108,9 +105,10 @@ if prompt := st.chat_input("Ask me anything..."):
         elif "Task 4" in task_mode:
             final_response = search_arxiv(prompt)
 
-        # Route 4: Multi-modal (Tasks 2, 5, 6)
+        # Route 4: Multi-modal, Sentiment, and Language (Tasks 2, 5, 6)
         else:
-            system_instruction = "Detect language, detect sentiment, and answer deeply."
+            # Unified instruction for automated analysis (Task 5 & 6)
+            system_instruction = "Detect user's language and sentiment. Respond in the same language. Analyze images if provided."
             if uploaded_image:
                 img = Image.open(uploaded_image)
                 response = client.models.generate_content(

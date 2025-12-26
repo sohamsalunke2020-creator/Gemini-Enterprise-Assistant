@@ -5,3 +5,5 @@ arxiv
 pandas
 chromadb
 langdetect
+pillow
+google-genai
